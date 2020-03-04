@@ -1,0 +1,1 @@
+docker-compose up --scale nifi=3 --force-recreate --build -d
