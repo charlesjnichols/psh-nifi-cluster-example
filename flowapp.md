@@ -1,6 +1,6 @@
 ## Network Setup
 
-create a docker network connect the nifi container
+create a docker network to connect the containers
 ```
 docker network create flowapp
 ```
