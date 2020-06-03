@@ -1,20 +1,29 @@
+## Network Setup
+
 create a docker network connect the nifi container
 ```
 docker network create flowapp
 ```
 
+## Nifi Setup
+
 create a new nifi container
 ```
 docker run --name nifi -p 8080:8080 -p 9092:9092 --network=flowapp -d apache/nifi:latest
 ```
-http://localhost:8080/nifi/
-import the integration_test template
+navigate to the nifi graph http://localhost:8080/nifi/ and import the [flowapp_integration_test.xml](flowapp_integration_test.xml?raw=true) template
+![snips](snips/apply_template.png?raw=true)
 
-add prometheus reporting task
+add prometheus reporting task to the controller settings
+![snips](snips/reporting_task_add.png?raw=true)
+![snips](snips/reporting_task_search.png?raw=true)
+![snips](snips/reporting_task_config.png?raw=true)
+![snips](snips/reporting_task_started.png?raw=true)
 
-navigate to /metrics exposure
+start the graph processors and navigate to prometheus metrics exposure http://localhost:9092/metrics/
+![snips](snips/reporting_task_endpoint.png?raw=true)
 
-
+## Prometheus Setup
 create a prometheus yml that harvests the metrics from nifi
 ```
 >prometheus.yml
@@ -47,36 +56,49 @@ scrape_configs:
     - targets: ['nifi:9092']
 ```
 
-create a new prometheus container
+create a new prometheus container mounting the configuration file
 ```
 docker run -d --name prometheus -p 9090:9090 -v $(pwd)/prometheus.yml:/etc/prometheus/prometheus.yml --network=flowapp prom/prometheus --config.file=/etc/prometheus/prometheus.yml
 ```
 
-navigate to the job status page to verify nifi metrics are being harvested
-http://localhost:9090/targets
+navigate to the job status page to verify nifi metrics are being harvested http://localhost:9090/targets
+![snips](snips/prometheus_jobs.png?raw=true)
 
-nagivate to the graph query page to verify the Processor metrics are collected
-http://localhost:9090/graph?g0.range_input=1h&g0.expr=nifi_amount_bytes_written%7Bcomponent_type%3D%22Processor%22%7D&g0.tab=1
+nagivate to the graph query page to verify the Processor metrics are collected http://localhost:9090/graph?g0.range_input=1h&g0.expr=nifi_amount_bytes_written%7Bcomponent_type%3D%22Processor%22%7D&g0.tab=1
+![snips](snips/prometheus_query.png?raw=true)
 
+## Grafana Setup
 create a new grafana container
 ```
 docker run -d --name grafana -p 3000:3000 --network flowapp grafana/grafana
 ```
 
-navigate to grafana and login using the default creds admin:admin
-http://localhost:3000/login
+navigate to grafana and login using the default creds admin:admin http://localhost:3000/login
+![snips](snips/grafana_login.png?raw=true)
 
 add prometheus as a new datasource
-
-save a test
+![snips](snips/grafana_datasource.png?raw=true)
+![snips](snips/grafana_datasource_add.png?raw=true)
+![snips](snips/grafana_datasource_config.png?raw=true)
+![snips](snips/grafana_datasource_save.png?raw=true)
 
 
 create a new dashboard
+![snips](snips/grafana_daashboard_create.png?raw=true)
 
 add a panel
+![snips](snips/grafana_dashboard_create_panel.png?raw=true)
 
 add the nifi metrics as a line graph
+![snips](snips/grafana_panel_edit.png?raw=true)
 
 configure the legend to show the component_names
+![snips](snips/grafana_panel_legend.png?raw=true)
+
+configure the panel settings
+![snips](snips/grafana_panel_settings.png?raw=true)
+
+and view the dashboard
+![snips](snips/grafana_flowapp.png?raw=true)
 
 
